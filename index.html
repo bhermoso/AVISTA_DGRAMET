@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVISTA - Indicadores y Variables para Salud Poblacional</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const App = () => {
+  const [vistaActual, setVistaActual] = useState('indicadores');
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('todos');
+  const [categoriaEAS, setCategoriaEAS] = useState('todos');
+
+  // Datos de indicadores - TODOS los 58
+  const indicadores = [
+    { id: 1, categoria: 'POBLACIÓN', nombre: 'Población total', unidad: 'Número', dato: '9.536', fuente: 'IECA (2024)', tendObs: '↑', tendDes: '↑', evol: '👍' },
+    { id: 2, categoria: 'POBLACIÓN', nombre: 'Población mayor de 65', unidad: '%', dato: '17,5', fuente: 'IECA (2024)', tendObs: '↑', tendDes: '↓', evol: '👎' },
+    { id: 3, categoria: 'POBLACIÓN', nombre: 'Población menor de 20', unidad: '%', dato: '20,1', fuente: 'IECA (2024)', tendObs: '↑', tendDes: '', evol: '' },
+    { id: 4, categoria: 'POBLACIÓN', nombre: 'Índice de envejecimiento', unidad: '%', dato: '104,3', fuente: 'IECA (2022)', tendObs: '↓', tendDes: '', evol: '' },
+    { id: 5, categoria: 'GÉNERO', nombre: 'Partes violencia de género', unidad: 'Número', dato: '5', fuente: 'HERMES (2024)', tendObs: '', tendDes: '↓', evol: '', destacado: true },
+    { id: 6, categoria: 'GÉNERO', nombre: 'Interrupción voluntaria del embarazo', unidad: 'Número', dato: '—', fuente: 'UE (2025)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 7, categoria: 'MORTALIDAD', nombre: 'Cardiovasculares', unidad: '%', dato: '35', fuente: 'IECA (2022)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 8, categoria: 'MORTALIDAD', nombre: 'Tumorales', unidad: '%', dato: '19', fuente: 'IECA (2022)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 9, categoria: 'MORTALIDAD', nombre: 'Respiratorias', unidad: '%', dato: '6', fuente: 'IECA (2022)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 10, categoria: 'MORTALIDAD', nombre: 'Infecciosas', unidad: '%', dato: '10', fuente: 'IECA (2022)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 11, categoria: 'MORTALIDAD', nombre: 'Sistema Nervioso y órganos sentidos', unidad: '%', dato: '3', fuente: 'IECA (2022)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 12, categoria: 'MORBILIDAD', nombre: 'Dislipemia', unidad: 'Casos', dato: '3.551', fuente: 'BPS (2023)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 13, categoria: 'MORBILIDAD', nombre: 'Artrosis/Espondiloartrosis', unidad: 'Casos', dato: '801', fuente: 'BPS (2023)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 14, categoria: 'MORBILIDAD', nombre: 'HTA', unidad: 'Casos', dato: '945', fuente: 'BPS (2023)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 15, categoria: 'MORBILIDAD', nombre: 'Trastornos de ansiedad', unidad: 'Casos', dato: '416', fuente: 'BPS (2023)', tendObs: '', tendDes: '↓', evol: '', destacado: true },
+    { id: 16, categoria: 'MORBILIDAD', nombre: 'Asma', unidad: 'Casos', dato: '547', fuente: 'BPS (2023)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 17, categoria: 'MORBILIDAD', nombre: 'Hipotiroidismo', unidad: 'Casos', dato: '121', fuente: 'BPS (2023)', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 18, categoria: 'CÁNCER HOMBRES', nombre: 'Piel no Melanoma', unidad: 'Casos', dato: '184', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 19, categoria: 'CÁNCER HOMBRES', nombre: 'Próstata', unidad: 'Casos', dato: '151', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 20, categoria: 'CÁNCER HOMBRES', nombre: 'Colon-Recto', unidad: 'Casos', dato: '61', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 21, categoria: 'CÁNCER HOMBRES', nombre: 'Vejiga', unidad: 'Casos', dato: '44', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 22, categoria: 'CÁNCER HOMBRES', nombre: 'Pulmón, tráquea, bronquios', unidad: 'Casos', dato: '40', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 23, categoria: 'CÁNCER MUJERES', nombre: 'Piel no Melanoma', unidad: 'Casos', dato: '143', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 24, categoria: 'CÁNCER MUJERES', nombre: 'Mama', unidad: 'Casos', dato: '118', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 25, categoria: 'CÁNCER MUJERES', nombre: 'Cuerpo uterino', unidad: 'Casos', dato: '50', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 26, categoria: 'CÁNCER MUJERES', nombre: 'Colon-recto', unidad: 'Casos', dato: '39', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 27, categoria: 'CÁNCER MUJERES', nombre: 'Vejiga', unidad: 'Casos', dato: '17', fuente: 'Reg. cáncer', tendObs: '', tendDes: '↓', evol: '' },
+    { id: 28, categoria: 'PROGRAMAS', nombre: 'Vacunación infantil captación (nacidos 1 año antes)', unidad: '%', dato: '98,8', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 29, categoria: 'PROGRAMAS', nombre: 'Vacunación infantil captación (nacidos 2 años antes)', unidad: '%', dato: '100', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 30, categoria: 'PROGRAMAS', nombre: 'Vacunación infantil captación (nacidos 4 años antes)', unidad: '%', dato: '98,87', fuente: 'INFOWEB (2021)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 31, categoria: 'PROGRAMAS', nombre: 'Cribado cáncer colon-recto (% participación invitadas)', unidad: '%', dato: '39,8', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '', destacado: true },
+    { id: 32, categoria: 'PROGRAMAS', nombre: 'Cribado cáncer colon-recto (% participación aceptación)', unidad: '%', dato: '—', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 33, categoria: 'PROGRAMAS', nombre: 'Cribado cáncer mama (% participación invitadas)', unidad: '%', dato: '37,5', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '', destacado: true },
+    { id: 34, categoria: 'PROGRAMAS', nombre: 'Cribado cáncer mama (% participación aceptación)', unidad: '%', dato: '—', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 35, categoria: 'PROGRAMAS', nombre: 'Cribado cáncer cérvix (% participación invitadas)', unidad: '%', dato: '—', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 36, categoria: 'PROGRAMAS', nombre: 'Cribado cáncer cérvix (% participación aceptación)', unidad: '%', dato: '—', fuente: 'INFOWEB (2023)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 37, categoria: 'HÁBITOS', nombre: 'Personas valoradas en dieta', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 38, categoria: 'HÁBITOS', nombre: 'Personas con baja adhesión dieta mediterránea', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 39, categoria: 'HÁBITOS', nombre: 'Personas valoradas en actividad física (15-64 años)', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 40, categoria: 'HÁBITOS', nombre: 'Personas con sedentarismo (15-64 años)', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 41, categoria: 'HÁBITOS', nombre: 'Personas inactivas (15-64 años)', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 42, categoria: 'HÁBITOS', nombre: 'Personas con sedentarismo (≥65 años sin limitaciones)', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 43, categoria: 'HÁBITOS', nombre: 'Personas inactivas (≥65 años sin limitaciones)', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 44, categoria: 'HÁBITOS', nombre: 'Personas valoradas en consumo de alcohol', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 45, categoria: 'HÁBITOS', nombre: 'Personas con consumo alcohol posible alto riesgo', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 46, categoria: 'HÁBITOS', nombre: 'Personas con consumo alcohol alto riesgo', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 47, categoria: 'HÁBITOS', nombre: 'Intervención avanzada individual hábitos saludables', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 48, categoria: 'HÁBITOS', nombre: 'Intervención avanzada grupal hábitos saludables', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 49, categoria: 'HÁBITOS', nombre: 'Personas con registros en formulario IAHS', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 50, categoria: 'HÁBITOS', nombre: 'Personas con al menos una visita IAHS individual', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 51, categoria: 'HÁBITOS', nombre: 'Personas con al menos una sesión IAHS grupal', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 52, categoria: 'HÁBITOS', nombre: 'Personas derivadas a UAEF', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 53, categoria: 'HÁBITOS', nombre: 'Personas con recomendación activo salud comunitario', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 54, categoria: 'HÁBITOS', nombre: 'PITA: intervenciones individuales', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 55, categoria: 'HÁBITOS', nombre: 'PITA: intervenciones grupales', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 56, categoria: 'HÁBITOS', nombre: 'PITA: intervenciones población fumadora', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 57, categoria: 'HÁBITOS', nombre: 'PITA: intervenciones población ex-fumadora', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+    { id: 58, categoria: 'HÁBITOS', nombre: 'PITA: intervenciones población no fumadora', unidad: 'Número', dato: '—', fuente: 'INFOWEB (2024)', tendObs: '', tendDes: '↑', evol: '' },
+  ];
+
+  // Datos de variables EAS reorganizados por CATEGORÍAS - TODAS las 105
+  const variables = [
+    // CATEGORÍA: Percepción estado salud y necesidades
+    { num: 1, form: 'F01', varCode: 'sexo', easCode: 'A1', numEAS: 'C1', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: 'Sexo', opciones: '1=Hombre, 2=Mujer', instrumento: null },
+    { num: 2, form: 'F01', varCode: 'edad', easCode: 'A2', numEAS: 'C2', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Número', pregunta: '¿Qué edad tiene?', opciones: '16-120 años', instrumento: null },
+    { num: 3, form: 'F01', varCode: 'estado_civil', easCode: 'A3', numEAS: 'A3', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Cuál es su estado civil?', opciones: '1=Soltero/a, 2=Casado/a, 3=Viudo/a, 4=Separado/a', instrumento: null },
+    { num: 4, form: 'F01', varCode: 'nivel_estudios', easCode: 'A4', numEAS: 'A4', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Nivel de estudios más alto', opciones: '1=No lee, 2=Sin estudios, 3=Prim.inc., 4=Primarios, 5=Secundarios, 6=Universitarios', instrumento: null },
+    { num: 5, form: 'F01', varCode: 'situacion_laboral', easCode: 'A5', numEAS: 'B1', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Situación laboral actual', opciones: '1=Trabaja, 2=Parado/a, 3=Jubilado/a, 4=Labores hogar, 5=Estudiante, 6=Incapacitado/a', instrumento: null },
+    { num: 6, form: 'F02', varCode: 'salud_autopercibida', easCode: 'B1', numEAS: 'C1', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Diría que su estado de salud es?', opciones: '1=Excelente, 2=Muy bueno, 3=Bueno, 4=Regular, 5=Malo', instrumento: 'SF-12' },
+    { num: 7, form: 'F02', varCode: 'salud_comparada', easCode: 'B2', numEAS: 'C1b', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: 'Comparando con hace 12 meses ¿su salud es?', opciones: '1=Mejor, 2=Igual, 3=Peor', instrumento: null },
+    { num: 8, form: 'F02', varCode: 'enfermedad_cronica', easCode: 'B3', numEAS: 'C2', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Tiene alguna enfermedad o problema de salud crónico?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 9, form: 'F02', varCode: 'limitacion_actividades', easCode: 'B4', numEAS: 'C3a', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿En qué medida se ha visto limitado/a para realizar actividades habituales?', opciones: '1=Gravemente, 2=Algo, 3=Nada', instrumento: null },
+    { num: 10, form: 'F02', varCode: 'dolor_malestar', easCode: 'B5', numEAS: 'C8', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Ha tenido dolor o malestar?', opciones: '1=Ninguno, 2=Moderado, 3=Extremo', instrumento: 'EQ-5D' },
+    { num: 11, form: 'F02', varCode: 'ansiedad_depresion', easCode: 'B6', numEAS: 'C9', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Ha tenido ansiedad o depresión?', opciones: '1=Ninguna, 2=Moderada, 3=Extrema', instrumento: 'EQ-5D' },
+    { num: 12, form: 'F02', varCode: 'salud_mental', easCode: 'B7', numEAS: 'SF12-MH', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Calculado', pregunta: 'Índice de Salud Mental SF-12', opciones: '0-100 (peor a mejor)', instrumento: 'SF-12' },
+    { num: 13, form: 'F02', varCode: 'salud_fisica', easCode: 'B8', numEAS: 'SF12-PH', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Calculado', pregunta: 'Índice de Salud Física SF-12', opciones: '0-100 (peor a mejor)', instrumento: 'SF-12' },
+    { num: 14, form: 'F02', varCode: 'calidad_vida', easCode: 'B9', numEAS: 'EQ5D-INDEX', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Calculado', pregunta: 'Índice de Calidad de Vida EQ-5D', opciones: '-0.59 a 1 (peor a mejor)', instrumento: 'EQ-5D' },
+    { num: 15, form: 'F03', varCode: 'peso', easCode: 'C1', numEAS: 'C10', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Número', pregunta: 'Peso actual (kg)', opciones: '30-250 kg', instrumento: null },
+    { num: 16, form: 'F03', varCode: 'altura', easCode: 'C2', numEAS: 'C11', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Número', pregunta: 'Altura (cm)', opciones: '100-220 cm', instrumento: null },
+    { num: 17, form: 'F03', varCode: 'imc', easCode: 'C3', numEAS: 'IMC', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Calculado', pregunta: 'Índice de Masa Corporal', opciones: 'Calculado: peso/(altura²)', instrumento: null },
+    { num: 18, form: 'F03', varCode: 'diabetes', easCode: 'C4', numEAS: 'C5-1', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece diabetes?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    { num: 19, form: 'F03', varCode: 'hipertension', easCode: 'C5', numEAS: 'C5-2', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece hipertensión arterial?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    { num: 20, form: 'F03', varCode: 'colesterol', easCode: 'C6', numEAS: 'C5-3', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece colesterol alto?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    { num: 21, form: 'F03', varCode: 'asma', easCode: 'C7', numEAS: 'C5-4', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece asma?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    { num: 22, form: 'F03', varCode: 'alergia', easCode: 'C8', numEAS: 'C5-5', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece alergia crónica?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    { num: 23, form: 'F03', varCode: 'artrosis', easCode: 'C9', numEAS: 'C5-6', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece artrosis, artritis o reumatismo?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    { num: 24, form: 'F03', varCode: 'dolor_cronico', easCode: 'C10', numEAS: 'C6', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece dolor crónico?', opciones: '1=Sí, 2=No', instrumento: null, critico: true },
+    { num: 25, form: 'F03', varCode: 'dolor_intensidad', easCode: 'C11', numEAS: 'C6a', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Número', pregunta: 'Intensidad del dolor (0-10)', opciones: '0=Sin dolor, 10=Máximo dolor', instrumento: 'EVA' },
+    { num: 26, form: 'F03', varCode: 'dolor_discapacitante', easCode: 'C12', numEAS: 'C6b', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿El dolor le impide realizar actividades?', opciones: '1=Sí, mucho, 2=Sí, algo, 3=No', instrumento: null },
+    { num: 27, form: 'F03', varCode: 'depresion', easCode: 'C13', numEAS: 'C5-10', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece depresión?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null, critico: true },
+    { num: 28, form: 'F03', varCode: 'ansiedad', easCode: 'C14', numEAS: 'C5-11', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Padece ansiedad crónica?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null, critico: true },
+    { num: 29, form: 'F03', varCode: 'cancer', easCode: 'C15', numEAS: 'C5-14', categoriaEAS: 'Percepción estado salud y necesidades', tipo: 'Radio', pregunta: '¿Ha padecido algún tumor maligno o cáncer?', opciones: '1=Sí actualmente, 2=Sí en el pasado, 3=No', instrumento: null },
+    
+    // CATEGORÍA: Hábitos de Salud
+    { num: 30, form: 'F04', varCode: 'tabaco_consumo', easCode: 'D1', numEAS: 'P1', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Fuma usted actualmente?', opciones: '1=Sí, diariamente, 2=Sí, ocasional, 3=No, exfumador, 4=No, nunca', instrumento: null },
+    { num: 31, form: 'F04', varCode: 'tabaco_cigarrillos_dia', easCode: 'D2', numEAS: 'P2', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: '¿Cuántos cigarrillos fuma al día?', opciones: '1-100', instrumento: null },
+    { num: 32, form: 'F04', varCode: 'tabaco_edad_inicio', easCode: 'D3', numEAS: 'P3', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: '¿A qué edad empezó a fumar regularmente?', opciones: '5-80 años', instrumento: null },
+    { num: 33, form: 'F04', varCode: 'tabaco_no_convencional', easCode: 'D4', numEAS: 'P4', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Consume tabaco no convencional (vaper, cachimba)?', opciones: '1=Sí, diario, 2=Ocasional, 3=Pasado, 4=Nunca', instrumento: null },
+    { num: 34, form: 'F04', varCode: 'alcohol_consumo', easCode: 'D5', numEAS: 'P7', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume bebidas alcohólicas?', opciones: '1=Diario, 2=5-6/sem, 3=3-4/sem, 4=1-2/sem, 5=<1/mes, 6=Nunca', instrumento: null },
+    { num: 35, form: 'F04', varCode: 'alcohol_cantidad', easCode: 'D6', numEAS: 'P8', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: 'Cuando bebe, ¿cuántas consumiciones toma?', opciones: '1=1-2, 2=3-4, 3=5-6, 4=7-9, 5=≥10', instrumento: 'AUDIT' },
+    { num: 36, form: 'F04', varCode: 'alcohol_intoxicacion', easCode: 'D7', numEAS: 'P9', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia toma 6 o más bebidas en un día?', opciones: '1=Diario, 2=Semanal, 3=Mensual, 4=<Mensual, 5=Nunca', instrumento: 'AUDIT' },
+    { num: 37, form: 'F05', varCode: 'act_fisica_vigorosa_dias', easCode: 'E1', numEAS: 'O1a', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Actividad física vigorosa: días por semana', opciones: '0-7 días', instrumento: 'IPAQ' },
+    { num: 38, form: 'F05', varCode: 'act_fisica_vigorosa_min', easCode: 'E2', numEAS: 'O1b', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Actividad física vigorosa: minutos por día', opciones: '0-600 minutos', instrumento: 'IPAQ' },
+    { num: 39, form: 'F05', varCode: 'act_fisica_moderada_dias', easCode: 'E3', numEAS: 'O2a', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Actividad física moderada: días por semana', opciones: '0-7 días', instrumento: 'IPAQ' },
+    { num: 40, form: 'F05', varCode: 'act_fisica_moderada_min', easCode: 'E4', numEAS: 'O2b', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Actividad física moderada: minutos por día', opciones: '0-600 minutos', instrumento: 'IPAQ' },
+    { num: 41, form: 'F05', varCode: 'caminar_dias', easCode: 'E5', numEAS: 'O3a', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Caminar: días por semana', opciones: '0-7 días', instrumento: 'IPAQ' },
+    { num: 42, form: 'F05', varCode: 'caminar_min', easCode: 'E6', numEAS: 'O3b', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Caminar: minutos por día', opciones: '0-600 minutos', instrumento: 'IPAQ' },
+    { num: 43, form: 'F05', varCode: 'sedentarismo_horas', easCode: 'E7', numEAS: 'O10', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: 'Horas sentado en un día normal', opciones: '0-24 horas', instrumento: 'IPAQ' },
+    { num: 44, form: 'F05', varCode: 'nivel_act_fisica', easCode: 'E8', numEAS: 'IPAQ-NIVEL', categoriaEAS: 'Hábitos de Salud', tipo: 'Calculado', pregunta: 'Nivel de actividad física IPAQ', opciones: '1=Bajo, 2=Moderado, 3=Alto', instrumento: 'IPAQ' },
+    { num: 45, form: 'F05', varCode: 'mets_totales', easCode: 'E9', numEAS: 'IPAQ-METS', categoriaEAS: 'Hábitos de Salud', tipo: 'Calculado', pregunta: 'METs totales por semana', opciones: 'Calculado según IPAQ', instrumento: 'IPAQ' },
+    { num: 46, form: 'F06', varCode: 'dieta_fruta_fresca', easCode: 'F1', numEAS: 'P1-1', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume fruta fresca?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 47, form: 'F06', varCode: 'dieta_verduras', easCode: 'F2', numEAS: 'P1-7', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume verduras/ensaladas?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 48, form: 'F06', varCode: 'dieta_legumbres', easCode: 'F3', numEAS: 'P1-8', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume legumbres?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 49, form: 'F06', varCode: 'dieta_pescado', easCode: 'F4', numEAS: 'P1-10', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume pescado?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 50, form: 'F06', varCode: 'dieta_carnes_rojas', easCode: 'F5', numEAS: 'P1-11', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume carnes rojas?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 51, form: 'F06', varCode: 'dieta_embutidos', easCode: 'F6', numEAS: 'P1-12', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume embutidos?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 52, form: 'F06', varCode: 'dieta_dulces', easCode: 'F7', numEAS: 'P1-15', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume dulces?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 53, form: 'F06', varCode: 'dieta_refrescos', easCode: 'F8', numEAS: 'P1-16', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Con qué frecuencia consume refrescos azucarados?', opciones: '1=≥1/día, 2=3-6/sem, 3=1-2/sem, 4=<1/sem, 5=Nunca', instrumento: null },
+    { num: 54, form: 'F06', varCode: 'dieta_mediterranea', easCode: 'F9', numEAS: 'DM-SCORE', categoriaEAS: 'Hábitos de Salud', tipo: 'Calculado', pregunta: 'Adherencia a dieta mediterránea', opciones: '0-14 puntos (baja/media/alta)', instrumento: 'MEDAS' },
+    { num: 55, form: 'F07', varCode: 'horas_sueno', easCode: 'G1', numEAS: 'N1', categoriaEAS: 'Hábitos de Salud', tipo: 'Número', pregunta: '¿Cuántas horas duerme habitualmente?', opciones: '2-16 horas', instrumento: null },
+    { num: 56, form: 'F07', varCode: 'calidad_sueno', easCode: 'G2', numEAS: 'N2', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Cómo valoraría la calidad de su sueño?', opciones: '1=Muy buena, 2=Buena, 3=Regular, 4=Mala, 5=Muy mala', instrumento: null },
+    { num: 57, form: 'F07', varCode: 'dificultad_dormir', easCode: 'G3', numEAS: 'N3', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Tiene dificultad para conciliar el sueño?', opciones: '1=Nunca, 2=Casi nunca, 3=Algunas veces, 4=Frecuentemente, 5=Siempre', instrumento: null },
+    { num: 58, form: 'F07', varCode: 'despertar_noche', easCode: 'G4', numEAS: 'N4', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Se despierta durante la noche?', opciones: '1=Nunca, 2=Casi nunca, 3=Algunas veces, 4=Frecuentemente, 5=Siempre', instrumento: null },
+    { num: 59, form: 'F07', varCode: 'cansancio_diurno', easCode: 'G5', numEAS: 'N5', categoriaEAS: 'Hábitos de Salud', tipo: 'Radio', pregunta: '¿Siente cansancio durante el día?', opciones: '1=Nunca, 2=Casi nunca, 3=Algunas veces, 4=Frecuentemente, 5=Siempre', instrumento: null },
+    
+    // CATEGORÍA: Bienestar y Condiciones de Vida
+    { num: 60, form: 'F08', varCode: 'ingreso_hogar', easCode: 'H1', numEAS: 'B17', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Ingresos mensuales netos del hogar', opciones: '1=<600€, 2=600-1200€, 3=1200-1800€, 4=1800-2400€, 5=>2400€', instrumento: null },
+    { num: 61, form: 'F08', varCode: 'dificultades_economicas', easCode: 'H2', numEAS: 'A24', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene dificultades para llegar a fin de mes?', opciones: '1=Mucha dif., 2=Dif., 3=Alguna dif., 4=Poca dif., 5=Ninguna dif.', instrumento: null },
+    { num: 62, form: 'F08', varCode: 'retrasos_pagos', easCode: 'H3', numEAS: 'A25', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Ha tenido retrasos en pagos?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 63, form: 'F08', varCode: 'vivienda_tipo', easCode: 'H4', numEAS: 'A9', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Tipo de vivienda', opciones: '1=Propiedad, 2=Alquiler, 3=Cedida, 4=Otros', instrumento: null },
+    { num: 64, form: 'F08', varCode: 'vivienda_habitaciones', easCode: 'H5', numEAS: 'A10', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: 'Número de habitaciones de la vivienda', opciones: '1-20', instrumento: null },
+    { num: 65, form: 'F08', varCode: 'vivienda_calefaccion', easCode: 'H6', numEAS: 'A12', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Dispone de calefacción?', opciones: '1=Sí, individual, 2=Sí, central, 3=No', instrumento: null },
+    { num: 66, form: 'F08', varCode: 'vivienda_aire', easCode: 'H7', numEAS: 'A13', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Dispone de aire acondicionado?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 67, form: 'F08', varCode: 'vivienda_humedad', easCode: 'H8', numEAS: 'A14', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene problemas de humedad en la vivienda?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 68, form: 'F08', varCode: 'vivienda_ruido', easCode: 'H9', numEAS: 'A15', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene problemas de ruido en la vivienda?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 69, form: 'F08', varCode: 'vivienda_contaminacion', easCode: 'H10', numEAS: 'A16', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Hay contaminación o malos olores en la zona?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 70, form: 'F08', varCode: 'vivienda_delincuencia', easCode: 'H11', numEAS: 'A17', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Hay problemas de delincuencia en la zona?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 71, form: 'F08', varCode: 'pobreza_energetica', easCode: 'H12', numEAS: 'A19', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Ha dejado de usar calefacción/aire por no poder pagar?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 72, form: 'F09', varCode: 'apoyo_social', easCode: 'I1', numEAS: 'M1', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene alguien que le escuche cuando necesita hablar?', opciones: '1=Siempre, 2=Casi siempre, 3=A veces, 4=Casi nunca, 5=Nunca', instrumento: 'DUKE' },
+    { num: 73, form: 'F09', varCode: 'apoyo_consejo', easCode: 'I2', numEAS: 'M2', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene alguien que le dé buenos consejos?', opciones: '1=Siempre, 2=Casi siempre, 3=A veces, 4=Casi nunca, 5=Nunca', instrumento: 'DUKE' },
+    { num: 74, form: 'F09', varCode: 'apoyo_afecto', easCode: 'I3', numEAS: 'M3', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene alguien que le demuestre amor y afecto?', opciones: '1=Siempre, 2=Casi siempre, 3=A veces, 4=Casi nunca, 5=Nunca', instrumento: 'DUKE' },
+    { num: 75, form: 'F09', varCode: 'apoyo_ayuda', easCode: 'I4', numEAS: 'M4', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene alguien que le ayude si está enfermo?', opciones: '1=Siempre, 2=Casi siempre, 3=A veces, 4=Casi nunca, 5=Nunca', instrumento: 'DUKE' },
+    { num: 76, form: 'F09', varCode: 'apoyo_diversion', easCode: 'I5', numEAS: 'M5', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene alguien con quien divertirse?', opciones: '1=Siempre, 2=Casi siempre, 3=A veces, 4=Casi nunca, 5=Nunca', instrumento: 'DUKE' },
+    { num: 77, form: 'F09', varCode: 'apoyo_duke', easCode: 'I6', numEAS: 'DUKE-SCORE', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Calculado', pregunta: 'Índice de apoyo social DUKE', opciones: '5-25 (menor a mayor apoyo)', instrumento: 'DUKE' },
+    { num: 78, form: 'F09', varCode: 'felicidad', easCode: 'I7', numEAS: 'M7', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se considera una persona feliz?', opciones: '1=Muy feliz, 2=Bastante, 3=Poco, 4=Nada feliz', instrumento: null },
+    { num: 79, form: 'F09', varCode: 'satisfaccion_vida', easCode: 'I8', numEAS: 'M8', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: 'Satisfacción con su vida en general (0-10)', opciones: '0=Totalmente insatisfecho, 10=Totalmente satisfecho', instrumento: null },
+    { num: 80, form: 'F09', varCode: 'soledad', easCode: 'I9', numEAS: 'M6', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se siente solo/a con frecuencia?', opciones: '1=Siempre, 2=Frecuentemente, 3=A veces, 4=Casi nunca, 5=Nunca', instrumento: null },
+    { num: 81, form: 'F10', varCode: 'medico_12meses', easCode: 'J1', numEAS: 'G1', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Ha consultado al médico en los últimos 12 meses?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 82, form: 'F10', varCode: 'medico_visitas', easCode: 'J2', numEAS: 'G2', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: 'Número de consultas al médico (últimos 12 meses)', opciones: '0-99', instrumento: null },
+    { num: 83, form: 'F10', varCode: 'enfermera_12meses', easCode: 'J3', numEAS: 'G3', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Ha consultado a enfermería en los últimos 12 meses?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 84, form: 'F10', varCode: 'enfermera_visitas', easCode: 'J4', numEAS: 'G4', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: 'Número de consultas a enfermería (últimos 12 meses)', opciones: '0-99', instrumento: null },
+    { num: 85, form: 'F10', varCode: 'urgencias_12meses', easCode: 'J5', numEAS: 'G8', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Ha acudido a urgencias en los últimos 12 meses?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 86, form: 'F10', varCode: 'urgencias_visitas', easCode: 'J6', numEAS: 'G9', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: 'Número de veces que acudió a urgencias (últimos 12 meses)', opciones: '0-99', instrumento: null },
+    { num: 87, form: 'F10', varCode: 'hospitalizacion_12meses', easCode: 'J7', numEAS: 'G10', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Ha estado hospitalizado en los últimos 12 meses?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 88, form: 'F10', varCode: 'hospitalizacion_veces', easCode: 'J8', numEAS: 'G11', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: 'Número de veces hospitalizado (últimos 12 meses)', opciones: '0-20', instrumento: null },
+    { num: 89, form: 'F10', varCode: 'medicamentos_prescritos', easCode: 'J9', numEAS: 'F1', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Toma medicamentos recetados por el médico?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 90, form: 'F10', varCode: 'medicamentos_num', easCode: 'J10', numEAS: 'F2', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Número', pregunta: '¿Cuántos medicamentos diferentes toma?', opciones: '0-30', instrumento: null },
+    { num: 91, form: 'F10', varCode: 'medicamentos_automedicacion', easCode: 'J11', numEAS: 'F3', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Toma medicamentos sin receta médica?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 92, form: 'F11', varCode: 'clase_social', easCode: 'K1', numEAS: 'CS', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Calculado', pregunta: 'Clase social (según ocupación)', opciones: 'I=Alta, II, III, IV, V, VI, VII=Baja', instrumento: null },
+    { num: 93, form: 'F11', varCode: 'situacion_empleo', easCode: 'K2', numEAS: 'B1', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Situación de empleo actual', opciones: '1=Trabaja, 2=Parado, 3=Jubilado, 4=Labores hogar, 5=Estudiante, 6=Incapacitado', instrumento: null },
+    { num: 94, form: 'F11', varCode: 'tipo_contrato', easCode: 'K3', numEAS: 'B8', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Tipo de contrato de trabajo', opciones: '1=Indefinido, 2=Temporal, 3=Autónomo, 4=Sin contrato', instrumento: null },
+    { num: 95, form: 'F11', varCode: 'jornada_laboral', easCode: 'K4', numEAS: 'B11', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Tipo de jornada laboral', opciones: '1=Completa, 2=Parcial', instrumento: null },
+    { num: 96, form: 'F11', varCode: 'exposicion_riesgos', easCode: 'K5', numEAS: 'B15', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Está expuesto a riesgos laborales?', opciones: '1=Sí, muchos, 2=Sí, algunos, 3=No', instrumento: null },
+    { num: 97, form: 'F11', varCode: 'satisfaccion_trabajo', easCode: 'K6', numEAS: 'B16', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: 'Satisfacción con su trabajo', opciones: '1=Muy satisfecho, 2=Satisfecho, 3=Poco, 4=Nada', instrumento: null },
+    { num: 98, form: 'F12', varCode: 'cribado_mama', easCode: 'L1', numEAS: 'H3', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se ha realizado mamografía en los últimos 2 años?', opciones: '1=Sí, 2=No, 3=No procede', instrumento: null },
+    { num: 99, form: 'F12', varCode: 'cribado_cervix', easCode: 'L2', numEAS: 'H1', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se ha realizado citología en los últimos 3 años?', opciones: '1=Sí, 2=No, 3=No procede', instrumento: null },
+    { num: 100, form: 'F12', varCode: 'cribado_colon', easCode: 'L3', numEAS: 'H4', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se ha realizado cribado de cáncer de colon?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 101, form: 'F12', varCode: 'vacuna_gripe', easCode: 'L4', numEAS: 'H6', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se ha vacunado de la gripe esta temporada?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 102, form: 'F12', varCode: 'vacuna_covid', easCode: 'L5', numEAS: 'H7', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Se ha vacunado contra COVID-19?', opciones: '1=Sí, completa, 2=Sí, parcial, 3=No', instrumento: null },
+    { num: 103, form: 'F12', varCode: 'seguro_privado', easCode: 'L6', numEAS: 'G19', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Tiene seguro médico privado?', opciones: '1=Sí, solo privado, 2=Sí, privado+público, 3=No', instrumento: null },
+    { num: 104, form: 'F12', varCode: 'acceso_internet', easCode: 'L7', numEAS: 'A21', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Dispone de acceso a internet en el hogar?', opciones: '1=Sí, 2=No', instrumento: null },
+    { num: 105, form: 'F12', varCode: 'cuidador_informal', easCode: 'L8', numEAS: 'A28', categoriaEAS: 'Bienestar y Condiciones de Vida', tipo: 'Radio', pregunta: '¿Es cuidador/a informal de alguna persona dependiente?', opciones: '1=Sí, 2=No', instrumento: null },
+  ];
+
+  // Filtrar indicadores
+  const indicadoresFiltrados = useMemo(() => {
+    return indicadores.filter(ind => {
+      const cumpleBusqueda = ind.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            ind.categoria.toLowerCase().includes(busqueda.toLowerCase());
+      const cumpleCategoria = filtroCategoria === 'todos' || ind.categoria === filtroCategoria;
+      return cumpleBusqueda && cumpleCategoria;
+    });
+  }, [busqueda, filtroCategoria]);
+
+  // Filtrar variables
+  const variablesFiltradas = useMemo(() => {
+    return variables.filter(v => {
+      const cumpleBusqueda = v.pregunta.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            v.varCode.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            v.easCode.toLowerCase().includes(busqueda.toLowerCase());
+      const cumpleCategoriaEAS = categoriaEAS === 'todos' || v.categoriaEAS === categoriaEAS;
+      return cumpleBusqueda && cumpleCategoriaEAS;
+    });
+  }, [busqueda, categoriaEAS]);
+
+  // Obtener categorías únicas de indicadores
+  const categoriasIndicadores = [...new Set(indicadores.map(i => i.categoria))];
+
+  // Obtener categorías EAS únicas
+  const categoriasEAS = [...new Set(variables.map(v => v.categoriaEAS))];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            🏥 AVISTA - Sistema de Indicadores y Variables
+          </h1>
+          <p className="text-gray-600">
+            Herramienta integral para el seguimiento de salud poblacional y análisis de datos de la Encuesta Andaluza de Salud
+          </p>
+        </div>
+
+        {/* Navegación */}
+        <div className="flex gap-4 mb-6">
+          <button
+            onClick={() => setVistaActual('indicadores')}
+            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
+              vistaActual === 'indicadores'
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            📊 Indicadores de Salud
+          </button>
+          <button
+            onClick={() => setVistaActual('variables')}
+            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
+              vistaActual === 'variables'
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            📝 Variables EAS
+          </button>
+        </div>
+
+        {/* Búsqueda y Filtros */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔍 Búsqueda
+              </label>
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+            
+            {vistaActual === 'indicadores' && (
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📂 Categoría
+                </label>
+                <select
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="todos">Todas las categorías</option>
+                  {categoriasIndicadores.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {vistaActual === 'variables' && (
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🏷️ Área exploratoria
+                </label>
+                <select
+                  value={categoriaEAS}
+                  onChange={(e) => setCategoriaEAS(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="todos">Todas las áreas exploratorias</option>
+                  {categoriasEAS.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+          <div className="mt-3 text-sm text-gray-600">
+            {vistaActual === 'indicadores' ? 
+              `Mostrando ${indicadoresFiltrados.length} de ${indicadores.length} indicadores` :
+              `Mostrando ${variablesFiltradas.length} de ${variables.length} variables`
+            }
+          </div>
+        </div>
+
+        {/* Vista de Indicadores */}
+        {vistaActual === 'indicadores' && (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-800 text-white">
+                  <tr>
+                    <th className="px-3 py-3 text-left">#</th>
+                    <th className="px-3 py-3 text-left">Categoría</th>
+                    <th className="px-3 py-3 text-left">Indicador</th>
+                    <th className="px-3 py-3 text-center">Unidad</th>
+                    <th className="px-3 py-3 text-center">Dato</th>
+                    <th className="px-3 py-3 text-center">Fuente</th>
+                    <th className="px-3 py-3 text-center">T.Obs</th>
+                    <th className="px-3 py-3 text-center">T.Des</th>
+                    <th className="px-3 py-3 text-center">Evol</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {indicadoresFiltrados.map((ind) => (
+                    <tr 
+                      key={ind.id}
+                      className={`border-b hover:bg-gray-50 ${ind.destacado ? 'bg-yellow-50' : ''}`}
+                    >
+                      <td className="px-3 py-3">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
+                          {ind.id}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">{ind.categoria}</span>
+                      </td>
+                      <td className="px-3 py-3 font-medium">{ind.nombre}</td>
+                      <td className="px-3 py-3 text-center text-xs text-gray-600">{ind.unidad}</td>
+                      <td className="px-3 py-3 text-center font-bold text-indigo-700">{ind.dato}</td>
+                      <td className="px-3 py-3 text-center text-xs text-gray-600">{ind.fuente}</td>
+                      <td className="px-3 py-3 text-center text-lg">
+                        {ind.tendObs === '↑' && <span className="text-blue-600">↑</span>}
+                        {ind.tendObs === '↓' && <span className="text-red-600">↓</span>}
+                      </td>
+                      <td className="px-3 py-3 text-center text-lg">
+                        {ind.tendDes === '↑' && <span className="text-green-600">↑</span>}
+                        {ind.tendDes === '↓' && <span className="text-red-600">↓</span>}
+                      </td>
+                      <td className="px-3 py-3 text-center text-lg">{ind.evol}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Vista de Variables */}
+        {vistaActual === 'variables' && (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-800 text-white">
+                  <tr>
+                    <th className="px-3 py-3 text-left">#</th>
+                    <th className="px-3 py-3 text-left">Form</th>
+                    <th className="px-3 py-3 text-left">Variable</th>
+                    <th className="px-3 py-3 text-left">Cód.EAS</th>
+                    <th className="px-3 py-3 text-left">Num.EAS</th>
+                    <th className="px-3 py-3 text-left">Área exploratoria</th>
+                    <th className="px-3 py-3 text-left">Tipo</th>
+                    <th className="px-3 py-3 text-left">Pregunta</th>
+                    <th className="px-3 py-3 text-left">Opciones</th>
+                    <th className="px-3 py-3 text-center">Extra</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {variablesFiltradas.map((v) => (
+                    <tr 
+                      key={v.num}
+                      className={`border-b hover:bg-gray-50 ${v.critico ? 'bg-red-50' : ''}`}
+                    >
+                      <td className="px-3 py-3">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
+                          {v.num}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">{v.form}</span>
+                      </td>
+                      <td className="px-3 py-3 font-mono font-bold text-indigo-700">{v.varCode}</td>
+                      <td className="px-3 py-3 font-mono text-xs text-red-600">{v.easCode}</td>
+                      <td className="px-3 py-3 font-mono text-xs font-bold text-green-700">{v.numEAS}</td>
+                      <td className="px-3 py-3">
+                        <span className={`text-xs px-2 py-1 rounded font-medium ${
+                          v.categoriaEAS === 'Percepción estado salud y necesidades' ? 'bg-purple-100 text-purple-700' :
+                          v.categoriaEAS === 'Hábitos de Salud' ? 'bg-green-100 text-green-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {v.categoriaEAS}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`text-xs px-2 py-1 rounded font-medium ${
+                          v.tipo === 'Radio' ? 'bg-blue-100 text-blue-700' :
+                          v.tipo === 'Número' ? 'bg-orange-100 text-orange-700' :
+                          v.tipo === 'Calculado' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {v.tipo}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">{v.pregunta}</td>
+                      <td className="px-3 py-3 text-xs text-gray-600">{v.opciones}</td>
+                      <td className="px-3 py-3 text-center">
+                        {v.instrumento && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-medium">
+                            🎯 {v.instrumento}
+                          </span>
+                        )}
+                        {v.critico && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-medium ml-1">
+                            ⚠️
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-xs text-gray-500">
+          <p>📋 Fuentes de datos: IECA, BPS, INFOWEB, Registro Cáncer, HERMES</p>
+          <p className="mt-1">🏥 Sistema AVISTA • Herramienta para seguimiento de salud poblacional</p>
+          <p className="mt-1">✨ Variables categorizadas según Encuesta Andaluza de Salud 2023</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
